@@ -1,7 +1,7 @@
 import { ethers } from "ethers";
 
 // ABI loaded from compiled artifacts via Vite's JSON import
-import contractArtifact from "../../../contracts/artifacts/contracts/VerifyOnChain.sol/VerifyOnChain.json";
+import contractArtifact from "../../../verify_on_chain_contracts/artifacts/contracts/VerifyOnChain.sol/VerifyOnChain.json";
 
 const CONTRACT_ABI = contractArtifact.abi;
 

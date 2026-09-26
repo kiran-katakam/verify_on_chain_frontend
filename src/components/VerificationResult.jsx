@@ -1,32 +1,44 @@
 import React, { useState, useEffect } from "react";
 import api from "../utils/api.js";
 
+const resultIcons = {
+    Valid: "verified",
+    Revoked: "gpp_bad",
+    "Not Found": "help_outline",
+};
+
+const resultAccents = {
+    Valid: "card-accent-success",
+    Revoked: "card-accent-error",
+    "Not Found": "card-accent-warning",
+};
+
+const resultClasses = {
+    Valid: "result-valid",
+    Revoked: "result-revoked",
+    "Not Found": "result-notfound",
+};
+
 export default function VerificationResult() {
-    const [universities, setUniversities] = useState([]);
     const [formData, setFormData] = useState({
-        firstName: "",
-        lastName: "",
-        dob: "",
-        studentId: "",
-        percentile: "",
-        issuerAddress: "",
+        firstName: "", lastName: "", dob: "", studentId: "", percentile: "", issuerAddress: "",
     });
-    const [result, setResult] = useState(null);
+    const [universities, setUniversities] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState(null);
     const [error, setError] = useState(null);
 
-    // Fetch universities for the dropdown
     useEffect(() => {
         api.get("/universities")
             .then(({ data }) => setUniversities(data))
-            .catch((err) => console.error("Failed to load universities:", err));
+            .catch(() => {});
     }, []);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
-    const handleVerify = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         setResult(null);
@@ -39,152 +51,123 @@ export default function VerificationResult() {
             });
             setResult(data);
         } catch (err) {
-            setError(
-                err.response?.data?.error || err.message || "Verification failed"
-            );
+            setError(err.response?.data?.error || err.message || "Verification failed");
         } finally {
             setLoading(false);
         }
     };
 
-    const resultColors = {
-        Valid: "result-valid",
-        Revoked: "result-revoked",
-        "Not Found": "result-notfound",
-    };
-
-    const resultIcons = {
-        Valid: "✅",
-        Revoked: "🚫",
-        "Not Found": "❓",
-    };
-
     return (
-        <div className="verification-page">
-            <h1>🔍 Verify Certificate</h1>
-            <p className="subtitle">
-                Enter the certificate details to verify authenticity on the blockchain.
-                <br />
-                <small>All fields are hashed and compared against the on-chain record.</small>
-            </p>
-
-            <form onSubmit={handleVerify} className="verify-form">
-                <div className="form-grid">
-                    <div className="form-group">
-                        <label htmlFor="verify-firstName">First Name</label>
-                        <input
-                            id="verify-firstName"
-                            name="firstName"
-                            type="text"
-                            value={formData.firstName}
-                            onChange={handleChange}
-                            required
-                            placeholder="John"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="verify-lastName">Last Name</label>
-                        <input
-                            id="verify-lastName"
-                            name="lastName"
-                            type="text"
-                            value={formData.lastName}
-                            onChange={handleChange}
-                            required
-                            placeholder="Doe"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="verify-dob">Date of Birth</label>
-                        <input
-                            id="verify-dob"
-                            name="dob"
-                            type="date"
-                            value={formData.dob}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="verify-studentId">Student ID</label>
-                        <input
-                            id="verify-studentId"
-                            name="studentId"
-                            type="text"
-                            value={formData.studentId}
-                            onChange={handleChange}
-                            required
-                            placeholder="21BCE7777"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="verify-percentile">Percentile (×100)</label>
-                        <input
-                            id="verify-percentile"
-                            name="percentile"
-                            type="number"
-                            value={formData.percentile}
-                            onChange={handleChange}
-                            required
-                            min="0"
-                            max="10000"
-                            placeholder="9550"
-                        />
-                    </div>
-                    <div className="form-group">
-                        <label htmlFor="verify-issuer">Issuing University</label>
-                        <select
-                            id="verify-issuer"
-                            name="issuerAddress"
-                            value={formData.issuerAddress}
-                            onChange={handleChange}
-                            required
-                        >
-                            <option value="">— Select University —</option>
-                            {universities.map((u) => (
-                                <option key={u._id} value={u.walletAddress}>
-                                    {u.name} ({u.shortCode})
-                                </option>
-                            ))}
-                        </select>
+        <div>
+            {/* Verification Form */}
+            <div className="card">
+                <div className="card-accent-top card-accent-primary"></div>
+                <div className="card-header">
+                    <div>
+                        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 20, color: "var(--secondary)" }}>search</span>
+                            <h2 className="text-headline-md">Credential Verification Query</h2>
+                        </div>
+                        <p className="text-body-sm" style={{ color: "var(--on-surface-variant)", marginTop: 2 }}>
+                            Re-enter the original credential fields to compute the deterministic hash
+                        </p>
                     </div>
                 </div>
-                <button type="submit" className="btn btn-primary btn-lg" disabled={loading}>
-                    {loading ? "⏳ Verifying..." : "🔍 Verify Certificate"}
-                </button>
-            </form>
 
-            {/* Error */}
-            {error && (
-                <div className="alert alert-error">
-                    <strong>Error:</strong> {error}
-                </div>
-            )}
+                <form onSubmit={handleSubmit}>
+                    <div className="form-grid">
+                        <div className="form-group">
+                            <label>First Name</label>
+                            <input type="text" name="firstName" value={formData.firstName}
+                                onChange={handleChange} required placeholder="Julian" />
+                        </div>
+                        <div className="form-group">
+                            <label>Last Name</label>
+                            <input type="text" name="lastName" value={formData.lastName}
+                                onChange={handleChange} required placeholder="Vance" />
+                        </div>
+                    </div>
+                    <div className="form-grid">
+                        <div className="form-group">
+                            <label>Student ID / Matrikel</label>
+                            <input type="text" name="studentId" value={formData.studentId}
+                                onChange={handleChange} className="mono-input" required placeholder="ETHZ-2024-9941" />
+                        </div>
+                        <div className="form-group">
+                            <label>Date of Birth</label>
+                            <input type="date" name="dob" value={formData.dob}
+                                onChange={handleChange} required />
+                        </div>
+                    </div>
+                    <div className="form-grid">
+                        <div className="form-group">
+                            <label>Percentile (×100)</label>
+                            <input type="number" name="percentile" value={formData.percentile}
+                                onChange={handleChange} min="0" max="10000" placeholder="9550 = 95.50%" required />
+                        </div>
+                        <div className="form-group">
+                            <label>Issuing University</label>
+                            <select name="issuerAddress" value={formData.issuerAddress}
+                                onChange={handleChange} required>
+                                <option value="">— Select Issuer —</option>
+                                {universities.map((u) => (
+                                    <option key={u.walletAddress} value={u.walletAddress}>
+                                        {u.name} ({u.shortCode})
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
 
-            {/* Result */}
+                    <button
+                        type="submit"
+                        className="btn btn-primary btn-lg"
+                        disabled={loading}
+                        style={{ marginTop: "var(--space-md)" }}
+                    >
+                        <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                            {loading ? "hourglass_empty" : "fact_check"}
+                        </span>
+                        {loading ? "Querying Blockchain..." : "Verify Against Ethereum Ledger"}
+                    </button>
+                </form>
+
+                {error && (
+                    <div className="alert alert-error">
+                        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
+                            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>error</span>
+                            <strong>Error:</strong> {error}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Result Card */}
             {result && (
-                <div className={`verification-result ${resultColors[result.result]}`}>
-                    <div className="result-icon">{resultIcons[result.result]}</div>
+                <div className={`verification-result ${resultClasses[result.result]}`}>
+                    <div className={`card-accent-top ${resultAccents[result.result]}`}></div>
+                    <span className="material-symbols-outlined" style={{ fontSize: 48 }}>
+                        {resultIcons[result.result]}
+                    </span>
                     <h2 className="result-text">{result.result}</h2>
                     <p className="result-message">{result.message}</p>
                     {result.details && (
                         <div className="result-details">
                             {result.details.issuer && (
-                                <p>
-                                    <strong>Issuer:</strong>{" "}
-                                    <code>
-                                        {result.details.issuer.slice(0, 10)}...
-                                        {result.details.issuer.slice(-6)}
-                                    </code>
-                                </p>
+                                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: 4 }}>
+                                    <span className="text-label-caps" style={{ color: "var(--outline)" }}>ISSUER</span>
+                                    <span className="text-mono-sm" style={{ color: "var(--on-surface)" }}>
+                                        {result.details.issuer.slice(0, 10)}...{result.details.issuer.slice(-6)}
+                                    </span>
+                                </div>
                             )}
                             {result.details.issuedAt && (
-                                <p>
-                                    <strong>Issued:</strong>{" "}
-                                    {new Date(
-                                        result.details.issuedAt
-                                    ).toLocaleDateString()}
-                                </p>
+                                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
+                                    <span className="text-label-caps" style={{ color: "var(--outline)" }}>ISSUED</span>
+                                    <span className="text-mono-sm" style={{ color: "var(--on-surface)" }}>
+                                        {new Date(result.details.issuedAt).toLocaleString()}
+                                    </span>
+                                </div>
                             )}
                         </div>
                     )}

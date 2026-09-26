@@ -6,11 +6,7 @@ const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS || "";
 
 export default function AdminDashboard({ wallet }) {
     const [universities, setUniversities] = useState([]);
-    const [formData, setFormData] = useState({
-        name: "",
-        shortCode: "",
-        walletAddress: "",
-    });
+    const [formData, setFormData] = useState({ name: "", shortCode: "", walletAddress: "" });
     const [status, setStatus] = useState("idle");
     const [error, setError] = useState(null);
 
@@ -19,16 +15,14 @@ export default function AdminDashboard({ wallet }) {
             const { data } = await api.get("/admin/universities");
             setUniversities(data);
         } catch (err) {
-            console.error("Failed to fetch universities:", err);
+            console.error(err);
         }
     };
 
-    useEffect(() => {
-        fetchUniversities();
-    }, []);
+    useEffect(() => { fetchUniversities(); }, []);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     };
 
     const handleSubmit = async (e) => {
@@ -36,130 +30,183 @@ export default function AdminDashboard({ wallet }) {
         setError(null);
 
         try {
-            // Step 1: Create university in DB
-            setStatus("creating");
-            await api.post("/admin/universities", formData);
+            // Step 1: Validate on backend (no DB write yet)
+            setStatus("preparing");
+            await api.post("/admin/universities/prepare", formData);
 
-            // Step 2: Whitelist on-chain via MetaMask
+            // Step 2: Sign on-chain transaction
             setStatus("signing");
             const contract = getSignerContract(CONTRACT_ADDRESS, wallet.signer);
             const tx = await contract.addAuthorizedIssuer(formData.walletAddress);
 
+            // Step 3: Wait for confirmation
             setStatus("confirming");
-            await tx.wait();
+            const receipt = await tx.wait();
+
+            // Step 4: Only NOW save to MongoDB
+            await api.post("/admin/universities/confirm", {
+                ...formData,
+                txHash: receipt.hash,
+            });
 
             setStatus("idle");
             setFormData({ name: "", shortCode: "", walletAddress: "" });
             await fetchUniversities();
         } catch (err) {
             setStatus("idle");
-            setError(
-                err.response?.data?.error || err.message || "Failed to onboard university"
-            );
+            if (err.code === "ACTION_REJECTED") {
+                setError("Transaction rejected in MetaMask. University was NOT registered.");
+            } else {
+                setError(err.response?.data?.error || err.message || "Failed to onboard university");
+            }
         }
     };
 
     return (
-        <div className="dashboard">
-            <h1>⚙️ Admin Dashboard</h1>
+        <div>
+            {/* Header */}
+            <div className="dashboard-header">
+                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
+                    <span className="text-label-caps" style={{
+                        color: "var(--tertiary)",
+                        background: "rgba(255, 185, 95, 0.2)",
+                        padding: "2px 6px",
+                        borderRadius: "var(--radius)"
+                    }}>CONTRACT OWNER</span>
+                    <span className="text-mono-sm" style={{ color: "var(--outline)" }}>•</span>
+                    <span className="text-label-caps" style={{ color: "var(--outline)" }}>ADMIN PRIVILEGES</span>
+                </div>
+                <h1 className="text-headline-xl">Admin Console & Whitelist Management</h1>
+                <p className="text-body-sm" style={{ color: "var(--on-surface-variant)" }}>
+                    Manage authorized registrar nodes and on-chain issuer whitelisting •{" "}
+                    <span className="text-mono-sm" style={{ color: "var(--primary)" }}>
+                        {wallet.account?.slice(0, 6)}...{wallet.account?.slice(-4)}
+                    </span>
+                </p>
+            </div>
 
-            <section className="card">
-                <h2>➕ Onboard University</h2>
-                <form onSubmit={handleSubmit}>
-                    <div className="form-grid">
-                        <div className="form-group">
-                            <label htmlFor="admin-name">University Name</label>
-                            <input
-                                id="admin-name"
-                                name="name"
-                                type="text"
-                                value={formData.name}
-                                onChange={handleChange}
-                                required
-                                placeholder="VIT-AP University"
-                            />
+            <div className="dashboard-grid">
+                {/* Left — Onboard Form */}
+                <div className="dashboard-sections">
+                    <div className="card">
+                        <div className="card-accent-top card-accent-primary"></div>
+                        <div className="card-header">
+                            <div>
+                                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
+                                    <span className="material-symbols-outlined" style={{ fontSize: 20, color: "var(--primary)" }}>add_business</span>
+                                    <h2 className="text-headline-md">Onboard New University</h2>
+                                </div>
+                                <p className="text-body-sm" style={{ color: "var(--on-surface-variant)", marginTop: 2 }}>
+                                    Register institution in DB & whitelist on smart contract
+                                </p>
+                            </div>
                         </div>
-                        <div className="form-group">
-                            <label htmlFor="admin-shortCode">Short Code</label>
-                            <input
-                                id="admin-shortCode"
-                                name="shortCode"
-                                type="text"
-                                value={formData.shortCode}
-                                onChange={handleChange}
-                                required
-                                placeholder="VITAP"
-                                maxLength={10}
-                            />
-                        </div>
-                        <div className="form-group form-group-full">
-                            <label htmlFor="admin-wallet">Wallet Address</label>
-                            <input
-                                id="admin-wallet"
-                                name="walletAddress"
-                                type="text"
-                                value={formData.walletAddress}
-                                onChange={handleChange}
-                                required
-                                placeholder="0x..."
-                            />
-                        </div>
-                    </div>
-                    <button
-                        type="submit"
-                        className="btn btn-primary"
-                        disabled={status !== "idle"}
-                    >
-                        {status === "creating" && "Creating..."}
-                        {status === "signing" && "Sign in MetaMask..."}
-                        {status === "confirming" && "Confirming..."}
-                        {status === "idle" && "🏫 Onboard University"}
-                    </button>
-                </form>
-                {error && (
-                    <div className="alert alert-error">
-                        <strong>Error:</strong> {error}
-                    </div>
-                )}
-            </section>
 
-            <section className="card">
-                <h2>📋 Registered Universities</h2>
-                {universities.length === 0 ? (
-                    <p className="empty-state">No universities registered yet.</p>
-                ) : (
-                    <div className="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Code</th>
-                                    <th>Wallet</th>
-                                    <th>Registered</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {universities.map((u) => (
-                                    <tr key={u._id}>
-                                        <td>{u.name}</td>
-                                        <td><code>{u.shortCode}</code></td>
-                                        <td>
-                                            <code>
-                                                {u.walletAddress.slice(0, 8)}...
-                                            </code>
-                                        </td>
-                                        <td>
-                                            {new Date(
-                                                u.createdAt
-                                            ).toLocaleDateString()}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                        <form onSubmit={handleSubmit}>
+                            <div className="form-group" style={{ marginBottom: "var(--space-md)" }}>
+                                <label>University Name</label>
+                                <input type="text" name="name" value={formData.name} onChange={handleChange}
+                                    required placeholder="ETH Zurich" />
+                            </div>
+                            <div className="form-grid">
+                                <div className="form-group">
+                                    <label>Short Code</label>
+                                    <input type="text" name="shortCode" value={formData.shortCode} onChange={handleChange}
+                                        className="mono-input" required placeholder="ETHZ" />
+                                </div>
+                                <div className="form-group">
+                                    <label>Wallet Address</label>
+                                    <input type="text" name="walletAddress" value={formData.walletAddress} onChange={handleChange}
+                                        className="mono-input" required placeholder="0x..." />
+                                </div>
+                            </div>
+
+                            {/* Pipeline status */}
+                            {status !== "idle" && (
+                                <div style={{ margin: "var(--space-md) 0", display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
+                                    <span className="network-dot green"></span>
+                                    <span className="text-mono-sm" style={{ color: "var(--primary)" }}>
+                                        {status === "preparing" && "Registering in database..."}
+                                        {status === "signing" && "Sign whitelist transaction in MetaMask..."}
+                                        {status === "confirming" && "Broadcasting to chain..."}
+                                    </span>
+                                </div>
+                            )}
+
+                            <button type="submit" className="btn btn-primary btn-lg"
+                                disabled={status !== "idle"} style={{ marginTop: "var(--space-md)" }}>
+                                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
+                                    {status === "idle" ? "domain_add" : "hourglass_empty"}
+                                </span>
+                                {status === "idle" ? "Register & Whitelist On-Chain" : "Processing..."}
+                            </button>
+                        </form>
+
+                        {error && (
+                            <div className="alert alert-error">
+                                <strong>Error:</strong> {error}
+                            </div>
+                        )}
                     </div>
-                )}
-            </section>
+                </div>
+
+                {/* Right — Registered Universities */}
+                <div className="dashboard-sections">
+                    <div className="card" style={{ padding: 0 }}>
+                        <div style={{ padding: "var(--space-lg)", borderBottom: "1px solid rgba(70, 69, 84, 0.3)" }}>
+                            <h2 className="text-headline-md">Authorized Registrar Nodes</h2>
+                            <p className="text-body-sm" style={{ color: "var(--on-surface-variant)" }}>
+                                On-chain whitelisted issuers
+                            </p>
+                        </div>
+
+                        {universities.length === 0 ? (
+                            <p className="empty-state">No universities registered yet.</p>
+                        ) : (
+                            <div className="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Institution</th>
+                                            <th>Code</th>
+                                            <th>Wallet</th>
+                                            <th>Registered</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {universities.map((u) => (
+                                            <tr key={u._id}>
+                                                <td className="text-body-md">{u.name}</td>
+                                                <td>
+                                                    <span className="text-mono-sm" style={{ color: "var(--primary)" }}>{u.shortCode}</span>
+                                                </td>
+                                                <td>
+                                                    <span className="text-mono-sm" title={u.walletAddress}>
+                                                        {u.walletAddress.slice(0, 8)}...{u.walletAddress.slice(-4)}
+                                                    </span>
+                                                </td>
+                                                <td className="text-mono-sm" style={{ color: "var(--on-surface-variant)" }}>
+                                                    {new Date(u.createdAt).toLocaleDateString()}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
+
+                        <div style={{
+                            padding: "var(--space-sm) var(--space-lg)",
+                            borderTop: "1px solid rgba(70, 69, 84, 0.3)",
+                            background: "var(--surface-container-lowest)",
+                        }}>
+                            <span className="text-mono-sm" style={{ color: "var(--outline)" }}>
+                                {universities.length} Authorized Node{universities.length !== 1 ? "s" : ""}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
