@@ -9,6 +9,8 @@ export default function AdminDashboard({ wallet }) {
     const [formData, setFormData] = useState({ name: "", shortCode: "", walletAddress: "" });
     const [status, setStatus] = useState("idle");
     const [error, setError] = useState(null);
+    const [confirming, setConfirming] = useState(null);
+    const [deletingPending, setDeletingPending] = useState(null);
 
     const fetchUniversities = async () => {
         try {
@@ -45,7 +47,7 @@ export default function AdminDashboard({ wallet }) {
 
             // Step 4: Only NOW save to MongoDB
             await api.post("/admin/universities/confirm", {
-                ...formData,
+                walletAddress: formData.walletAddress,
                 txHash: receipt.hash,
             });
 
@@ -54,12 +56,43 @@ export default function AdminDashboard({ wallet }) {
             await fetchUniversities();
         } catch (err) {
             setStatus("idle");
+            await fetchUniversities(); // refresh to show pending entry if it was created
             if (err.code === "ACTION_REJECTED") {
-                setError("Transaction rejected in MetaMask. University was NOT registered.");
+                setError("Transaction rejected in MetaMask. University saved as pending — use Confirm to retry.");
             } else {
                 setError(err.response?.data?.error || err.message || "Failed to onboard university");
             }
         }
+    };
+
+    const handleConfirmPending = async (u) => {
+        setConfirming(u.walletAddress);
+        setError(null);
+        try {
+            const contract = getSignerContract(CONTRACT_ADDRESS, wallet.signer);
+            const tx = await contract.addAuthorizedIssuer(u.walletAddress);
+            const receipt = await tx.wait();
+            await api.post("/admin/universities/confirm", {
+                walletAddress: u.walletAddress,
+                txHash: receipt.hash,
+            });
+            await fetchUniversities();
+        } catch (err) {
+            if (err.code !== "ACTION_REJECTED") {
+                setError(err.response?.data?.error || err.reason || err.message || "Confirm failed");
+            }
+        } finally { setConfirming(null); }
+    };
+
+    const handleDeletePending = async (walletAddress) => {
+        if (!confirm("Delete pending university entry?")) return;
+        setDeletingPending(walletAddress);
+        try {
+            await api.delete(`/admin/universities/${encodeURIComponent(walletAddress)}`);
+            await fetchUniversities();
+        } catch (err) {
+            setError(err.response?.data?.error || err.message || "Delete failed");
+        } finally { setDeletingPending(null); }
     };
 
     return (
@@ -170,7 +203,8 @@ export default function AdminDashboard({ wallet }) {
                                             <th>Institution</th>
                                             <th>Code</th>
                                             <th>Wallet</th>
-                                            <th>Registered</th>
+                                            <th>Status</th>
+                                            <th style={{ textAlign: "right" }}>Actions</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -185,8 +219,32 @@ export default function AdminDashboard({ wallet }) {
                                                         {u.walletAddress.slice(0, 8)}...{u.walletAddress.slice(-4)}
                                                     </span>
                                                 </td>
-                                                <td className="text-mono-sm" style={{ color: "var(--on-surface-variant)" }}>
-                                                    {new Date(u.createdAt).toLocaleDateString()}
+                                                <td>
+                                                    {u.status === "active" ? (
+                                                        <span className="badge badge-issued">Active</span>
+                                                    ) : (
+                                                        <span className="badge badge-pending">Pending On-Chain</span>
+                                                    )}
+                                                </td>
+                                                <td className="actions-cell">
+                                                    {u.status === "pending_onchain" && (
+                                                        <>
+                                                            <button
+                                                                className="action-btn action-btn-primary"
+                                                                onClick={() => handleConfirmPending(u)}
+                                                                disabled={confirming === u.walletAddress}
+                                                            >
+                                                                {confirming === u.walletAddress ? "Signing..." : "Confirm"}
+                                                            </button>
+                                                            <button
+                                                                className="action-btn action-btn-danger"
+                                                                onClick={() => handleDeletePending(u.walletAddress)}
+                                                                disabled={deletingPending === u.walletAddress}
+                                                            >
+                                                                {deletingPending === u.walletAddress ? "..." : "Delete"}
+                                                            </button>
+                                                        </>
+                                                    )}
                                                 </td>
                                             </tr>
                                         ))}
