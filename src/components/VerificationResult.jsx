@@ -58,7 +58,7 @@ export default function VerificationResult() {
     };
 
     return (
-        <div>
+        <div className={`verifier-grid ${result ? "verifier-grid-result" : ""}`}>
             {/* Verification Form */}
             <div className="card">
                 <div className="card-accent-top card-accent-primary"></div>
@@ -142,9 +142,9 @@ export default function VerificationResult() {
                 )}
             </div>
 
-            {/* Result Card */}
+            {/* Result Card — side by side on desktop */}
             {result && (
-                <div className={`verification-result ${resultClasses[result.result]}`}>
+                <div className={`verification-result ${resultClasses[result.result]}`} style={{ position: "sticky", top: "var(--space-xl)" }}>
                     <div className={`card-accent-top ${resultAccents[result.result]}`}></div>
                     <span className="material-symbols-outlined" style={{ fontSize: 48 }}>
                         {resultIcons[result.result]}

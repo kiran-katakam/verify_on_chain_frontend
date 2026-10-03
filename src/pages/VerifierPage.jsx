@@ -23,9 +23,7 @@ export default function VerifierPage({ wallet }) {
                 </p>
             </div>
 
-            <div style={{ maxWidth: 800 }}>
-                <VerificationResult />
-            </div>
+            <VerificationResult />
         </div>
     );
 }

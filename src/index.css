@@ -1040,8 +1040,17 @@ tr.revoked-row td {
 /* ══════════════════════════════════════════════════════════════════════
    VERIFICATION PAGE
    ══════════════════════════════════════════════════════════════════════ */
+.verifier-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-xl);
+    align-items: start;
+}
+.verifier-grid-result {
+    grid-template-columns: 1fr 1fr;
+}
+
 .verification-result {
-    margin-top: var(--space-xl);
     padding: var(--space-2xl);
     border-radius: var(--radius-xl);
     text-align: center;
@@ -1148,6 +1157,9 @@ tr.revoked-row td {
         grid-template-columns: 1fr;
     }
     .features-grid {
+        grid-template-columns: 1fr;
+    }
+    .verifier-grid-result {
         grid-template-columns: 1fr;
     }
     .metrics-grid {
