@@ -7,23 +7,10 @@ export default function UniversityDashboard({ wallet }) {
         <div>
             {/* Dashboard Header */}
             <div className="dashboard-header">
-                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
-                    <span className="text-label-caps" style={{
-                        color: "var(--primary)",
-                        background: "rgba(128, 131, 255, 0.2)",
-                        padding: "2px 6px",
-                        borderRadius: "var(--radius)"
-                    }}>NODE INSTANCE</span>
-                    <span className="text-mono-sm" style={{ color: "var(--outline)" }}>•</span>
-                    <span className="text-mono-sm" style={{ color: "var(--secondary)", display: "flex", alignItems: "center", gap: 4 }}>
-                        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--secondary)", display: "inline-block" }}></span>
-                        Active
-                    </span>
-                </div>
-                <h1 className="text-headline-xl">University Registrar Office</h1>
+                <h1 className="text-headline-xl">Registrar</h1>
                 <p className="text-body-sm" style={{ color: "var(--on-surface-variant)" }}>
-                    Sovereign Academic Attestation Protocol • Wallet{" "}
-                    <span className="text-mono-sm" style={{ color: "var(--primary)" }}>
+                    Issue certificates and revoke ones issued in error. Every action is signed by your wallet{" "}
+                    <span className="wallet-address">
                         {wallet.account?.slice(0, 6)}...{wallet.account?.slice(-4)}
                     </span>
                 </p>

@@ -25,7 +25,7 @@ export default function CertificateList({ wallet }) {
     useEffect(() => { fetchCertificates(); }, []);
 
     const handleRevoke = async (fieldHash) => {
-        if (!confirm("Irreversible action: This will permanently revoke this certificate on-chain. Continue?")) return;
+        if (!confirm("Revoke this certificate? This is permanent: the record stays on-chain, marked invalid.")) return;
         setRevoking(fieldHash);
         try {
             await api.post(`/certificates/${encodeURIComponent(fieldHash)}/revoke/prepare`);
@@ -63,14 +63,14 @@ export default function CertificateList({ wallet }) {
         revoked: certificates.filter(c => c.status === "revoked").length,
     };
 
-    if (loading) return <p className="loading">Loading registry...</p>;
+    if (loading) return <p className="loading">Loading certificates…</p>;
 
     return (
         <div className="card" style={{ padding: 0 }}>
             {/* Table Toolbar */}
             <div style={{
                 padding: "var(--space-lg)",
-                borderBottom: "1px solid rgba(70, 69, 84, 0.3)",
+                borderBottom: "1px solid var(--rule-soft)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
@@ -78,33 +78,31 @@ export default function CertificateList({ wallet }) {
                 gap: "var(--space-md)",
             }}>
                 <div>
-                    <h2 className="text-headline-md">Issued Certificate Registry</h2>
+                    <h2 className="text-headline-md">Your certificates</h2>
                     <p className="text-body-sm" style={{ color: "var(--on-surface-variant)" }}>
-                        Real-time ledger state
+                        Revoking is permanent. Pending entries were never signed and can be cancelled.
                     </p>
                 </div>
                 {/* Filter pills */}
                 <div style={{
                     display: "flex",
                     alignItems: "center",
-                    gap: 2,
-                    background: "var(--surface-container)",
-                    padding: 2,
-                    borderRadius: "var(--radius-lg)",
-                    border: "1px solid rgba(70, 69, 84, 0.3)"
+                    border: "1px solid var(--ink)"
                 }}>
                     {["all", "issued", "pending", "revoked"].map((f) => (
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className="text-mono-sm"
+                            aria-pressed={filter === f}
+                            className="text-body-sm"
                             style={{
-                                padding: "4px 12px",
-                                borderRadius: "var(--radius)",
+                                padding: "6px 12px",
                                 border: "none",
+                                fontFamily: "inherit",
+                                fontWeight: 600,
                                 cursor: "pointer",
-                                background: filter === f ? "var(--surface-container-high)" : "transparent",
-                                color: filter === f ? "var(--on-surface)" : "var(--outline)",
+                                background: filter === f ? "var(--ink)" : "transparent",
+                                color: filter === f ? "var(--paper-hi)" : "var(--ink-2)",
                                 transition: "var(--transition)",
                             }}
                         >
@@ -121,9 +119,9 @@ export default function CertificateList({ wallet }) {
                     <table>
                         <thead>
                             <tr>
-                                <th>Cert Hash (Leaf)</th>
+                                <th>Fingerprint</th>
                                 <th>Student ID</th>
-                                <th>Consensus Status</th>
+                                <th>Status</th>
                                 <th>Date</th>
                                 <th style={{ textAlign: "right" }}>Actions</th>
                             </tr>
@@ -135,7 +133,7 @@ export default function CertificateList({ wallet }) {
                                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                                             <span className="text-mono-sm" style={{
                                                 fontWeight: 600,
-                                                color: cert.status === "revoked" ? "var(--outline)" : "var(--on-surface)",
+                                                color: cert.status === "revoked" ? "var(--ink-3)" : "var(--seal)",
                                                 textDecoration: cert.status === "revoked" ? "line-through" : "none",
                                             }} title={cert.fieldHash}>
                                                 {cert.fieldHash.slice(0, 8)}...{cert.fieldHash.slice(-4)}
@@ -144,22 +142,21 @@ export default function CertificateList({ wallet }) {
                                     </td>
                                     <td>
                                         <span className="text-mono-sm" style={{
-                                            color: cert.status === "revoked" ? "var(--error)" : "var(--primary)"
+                                            color: cert.status === "revoked" ? "var(--ink-3)" : "var(--ink)"
                                         }}>
                                             {cert.studentId}
                                         </span>
                                     </td>
                                     <td>
                                         {cert.status === "issued" && (
-                                            <span className="badge badge-issued">Issued (On-Chain)</span>
+                                            <span className="badge badge-issued">Issued</span>
                                         )}
                                         {cert.status === "pending" && (
-                                            <span className="badge badge-pending">Pending Mempool</span>
+                                            <span className="badge badge-pending">Pending</span>
                                         )}
                                         {cert.status === "revoked" && (
                                             <span className="badge badge-revoked">
-                                                <span className="material-symbols-outlined" style={{ fontSize: 12 }}>block</span>
-                                                Revoked On-Chain
+                                                Revoked
                                             </span>
                                         )}
                                     </td>
@@ -173,7 +170,7 @@ export default function CertificateList({ wallet }) {
                                                 onClick={() => handleDelete(cert.fieldHash)}
                                                 disabled={deleting === cert.fieldHash}
                                             >
-                                                {deleting === cert.fieldHash ? "Deleting..." : "Cancel"}
+                                                {deleting === cert.fieldHash ? "Cancelling…" : "Cancel"}
                                             </button>
                                         )}
                                         {cert.status === "issued" && (
@@ -182,7 +179,7 @@ export default function CertificateList({ wallet }) {
                                                 onClick={() => handleRevoke(cert.fieldHash)}
                                                 disabled={revoking === cert.fieldHash}
                                             >
-                                                {revoking === cert.fieldHash ? "Revoking..." : "Revoke"}
+                                                {revoking === cert.fieldHash ? "Revoking…" : "Revoke"}
                                             </button>
                                         )}
                                     </td>
@@ -196,11 +193,10 @@ export default function CertificateList({ wallet }) {
             {/* Footer */}
             <div style={{
                 padding: "var(--space-sm) var(--space-lg)",
-                borderTop: "1px solid rgba(70, 69, 84, 0.3)",
-                background: "var(--surface-container-lowest)",
+                borderTop: "1px solid var(--rule-soft)",
             }}>
-                <span className="text-mono-sm" style={{ color: "var(--outline)" }}>
-                    Showing {filtered.length} of {certificates.length} Attestations
+                <span className="text-body-sm" style={{ color: "var(--ink-3)" }}>
+                    Showing {filtered.length} of {certificates.length}
                 </span>
             </div>
         </div>

@@ -99,20 +99,10 @@ export default function AdminDashboard({ wallet }) {
         <div>
             {/* Header */}
             <div className="dashboard-header">
-                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
-                    <span className="text-label-caps" style={{
-                        color: "var(--tertiary)",
-                        background: "rgba(255, 185, 95, 0.2)",
-                        padding: "2px 6px",
-                        borderRadius: "var(--radius)"
-                    }}>CONTRACT OWNER</span>
-                    <span className="text-mono-sm" style={{ color: "var(--outline)" }}>•</span>
-                    <span className="text-label-caps" style={{ color: "var(--outline)" }}>ADMIN PRIVILEGES</span>
-                </div>
-                <h1 className="text-headline-xl">Admin Console & Whitelist Management</h1>
+                <h1 className="text-headline-xl">Universities and issuer whitelist</h1>
                 <p className="text-body-sm" style={{ color: "var(--on-surface-variant)" }}>
-                    Manage authorized registrar nodes and on-chain issuer whitelisting •{" "}
-                    <span className="text-mono-sm" style={{ color: "var(--primary)" }}>
+                    Only whitelisted university wallets can issue certificates. Signed in as contract owner{" "}
+                    <span className="wallet-address">
                         {wallet.account?.slice(0, 6)}...{wallet.account?.slice(-4)}
                     </span>
                 </p>
@@ -122,33 +112,29 @@ export default function AdminDashboard({ wallet }) {
                 {/* Left — Onboard Form */}
                 <div className="dashboard-sections">
                     <div className="card">
-                        <div className="card-accent-top card-accent-primary"></div>
                         <div className="card-header">
                             <div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: 20, color: "var(--primary)" }}>add_business</span>
-                                    <h2 className="text-headline-md">Onboard New University</h2>
-                                </div>
+                                <h2 className="text-headline-md">Onboard a university</h2>
                                 <p className="text-body-sm" style={{ color: "var(--on-surface-variant)", marginTop: 2 }}>
-                                    Register institution in DB & whitelist on smart contract
+                                    Saved to the database, then whitelisted on the contract with your signature.
                                 </p>
                             </div>
                         </div>
 
                         <form onSubmit={handleSubmit}>
                             <div className="form-group" style={{ marginBottom: "var(--space-md)" }}>
-                                <label>University Name</label>
+                                <label>University name</label>
                                 <input type="text" name="name" value={formData.name} onChange={handleChange}
-                                    required placeholder="ETH Zurich" />
+                                    required placeholder="VIT-AP University" />
                             </div>
                             <div className="form-grid">
                                 <div className="form-group">
-                                    <label>Short Code</label>
+                                    <label>Short code</label>
                                     <input type="text" name="shortCode" value={formData.shortCode} onChange={handleChange}
-                                        className="mono-input" required placeholder="ETHZ" />
+                                        className="mono-input" required placeholder="VITAP" />
                                 </div>
                                 <div className="form-group">
-                                    <label>Wallet Address</label>
+                                    <label>Wallet address</label>
                                     <input type="text" name="walletAddress" value={formData.walletAddress} onChange={handleChange}
                                         className="mono-input" required placeholder="0x..." />
                                 </div>
@@ -157,21 +143,17 @@ export default function AdminDashboard({ wallet }) {
                             {/* Pipeline status */}
                             {status !== "idle" && (
                                 <div style={{ margin: "var(--space-md) 0", display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
-                                    <span className="network-dot green"></span>
-                                    <span className="text-mono-sm" style={{ color: "var(--primary)" }}>
-                                        {status === "preparing" && "Registering in database..."}
-                                        {status === "signing" && "Sign whitelist transaction in MetaMask..."}
-                                        {status === "confirming" && "Broadcasting to chain..."}
+                                    <span className="text-body-sm" style={{ color: "var(--ink)" }} aria-live="polite">
+                                        {status === "preparing" && "Checking the details…"}
+                                        {status === "signing" && "Sign the whitelist transaction in MetaMask…"}
+                                        {status === "confirming" && "Waiting for the transaction to confirm…"}
                                     </span>
                                 </div>
                             )}
 
                             <button type="submit" className="btn btn-primary btn-lg"
                                 disabled={status !== "idle"} style={{ marginTop: "var(--space-md)" }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-                                    {status === "idle" ? "domain_add" : "hourglass_empty"}
-                                </span>
-                                {status === "idle" ? "Register & Whitelist On-Chain" : "Processing..."}
+                                {status === "idle" ? "Register and whitelist" : "Working…"}
                             </button>
                         </form>
 
@@ -186,10 +168,10 @@ export default function AdminDashboard({ wallet }) {
                 {/* Right — Registered Universities */}
                 <div className="dashboard-sections">
                     <div className="card" style={{ padding: 0 }}>
-                        <div style={{ padding: "var(--space-lg)", borderBottom: "1px solid rgba(70, 69, 84, 0.3)" }}>
-                            <h2 className="text-headline-md">Authorized Registrar Nodes</h2>
+                        <div style={{ padding: "var(--space-lg)", borderBottom: "1px solid var(--rule-soft)" }}>
+                            <h2 className="text-headline-md">Registered universities</h2>
                             <p className="text-body-sm" style={{ color: "var(--on-surface-variant)" }}>
-                                On-chain whitelisted issuers
+                                Active wallets can issue. Pending ones still need the whitelist transaction.
                             </p>
                         </div>
 
@@ -212,7 +194,7 @@ export default function AdminDashboard({ wallet }) {
                                             <tr key={u._id}>
                                                 <td className="text-body-md">{u.name}</td>
                                                 <td>
-                                                    <span className="text-mono-sm" style={{ color: "var(--primary)" }}>{u.shortCode}</span>
+                                                    <span className="text-mono-sm">{u.shortCode}</span>
                                                 </td>
                                                 <td>
                                                     <span className="text-mono-sm" title={u.walletAddress}>
@@ -223,7 +205,7 @@ export default function AdminDashboard({ wallet }) {
                                                     {u.status === "active" ? (
                                                         <span className="badge badge-issued">Active</span>
                                                     ) : (
-                                                        <span className="badge badge-pending">Pending On-Chain</span>
+                                                        <span className="badge badge-pending">Pending</span>
                                                     )}
                                                 </td>
                                                 <td className="actions-cell">
@@ -234,14 +216,14 @@ export default function AdminDashboard({ wallet }) {
                                                                 onClick={() => handleConfirmPending(u)}
                                                                 disabled={confirming === u.walletAddress}
                                                             >
-                                                                {confirming === u.walletAddress ? "Signing..." : "Confirm"}
+                                                                {confirming === u.walletAddress ? "Signing…" : "Confirm"}
                                                             </button>
                                                             <button
                                                                 className="action-btn action-btn-danger"
                                                                 onClick={() => handleDeletePending(u.walletAddress)}
                                                                 disabled={deletingPending === u.walletAddress}
                                                             >
-                                                                {deletingPending === u.walletAddress ? "..." : "Delete"}
+                                                                {deletingPending === u.walletAddress ? "Deleting…" : "Delete"}
                                                             </button>
                                                         </>
                                                     )}
@@ -255,11 +237,10 @@ export default function AdminDashboard({ wallet }) {
 
                         <div style={{
                             padding: "var(--space-sm) var(--space-lg)",
-                            borderTop: "1px solid rgba(70, 69, 84, 0.3)",
-                            background: "var(--surface-container-lowest)",
+                            borderTop: "1px solid var(--rule-soft)",
                         }}>
-                            <span className="text-mono-sm" style={{ color: "var(--outline)" }}>
-                                {universities.length} Authorized Node{universities.length !== 1 ? "s" : ""}
+                            <span className="text-body-sm" style={{ color: "var(--ink-3)" }}>
+                                {universities.length} universit{universities.length !== 1 ? "ies" : "y"}
                             </span>
                         </div>
                     </div>
