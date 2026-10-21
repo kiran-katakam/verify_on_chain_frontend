@@ -5,8 +5,7 @@ export default function TermsConditions() {
     return (
         <div style={{ maxWidth: 800, margin: "0 auto" }}>
             <div style={{ marginBottom: "var(--space-2xl)" }}>
-                <span className="text-label-caps" style={{ color: "var(--tertiary)" }}>LEGAL</span>
-                <h1 className="text-headline-xl" style={{ marginTop: 4 }}>Terms & Conditions</h1>
+                <h1 className="text-headline-xl">Terms & Conditions</h1>
                 <p className="text-body-sm" style={{ color: "var(--outline)", marginTop: 4 }}>Last updated: September 2026</p>
             </div>
 
@@ -31,21 +30,21 @@ export default function TermsConditions() {
                 <section>
                     <h2 className="text-headline-sm" style={{ marginBottom: "var(--space-sm)", color: "var(--primary)" }}>3. User Roles & Responsibilities</h2>
                     <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}>
-                        <div style={{ background: "var(--surface-container-lowest)", padding: "var(--space-md)", borderRadius: "var(--radius-lg)", border: "1px solid rgba(70,69,84,0.3)" }}>
+                        <div style={{ background: "var(--surface-container-lowest)", padding: "var(--space-md)", borderRadius: "var(--radius-lg)", border: "1px solid var(--rule-soft)" }}>
                             <span className="text-headline-sm" style={{ color: "var(--tertiary)", display: "block", marginBottom: 4 }}>Contract Owner (Admin)</span>
                             <p className="text-body-sm" style={{ color: "var(--on-surface-variant)" }}>
                                 The contract owner is responsible for whitelisting authorized university wallets.
                                 The admin must verify the legitimacy of institutions before granting issuer privileges.
                             </p>
                         </div>
-                        <div style={{ background: "var(--surface-container-lowest)", padding: "var(--space-md)", borderRadius: "var(--radius-lg)", border: "1px solid rgba(70,69,84,0.3)" }}>
+                        <div style={{ background: "var(--surface-container-lowest)", padding: "var(--space-md)", borderRadius: "var(--radius-lg)", border: "1px solid var(--rule-soft)" }}>
                             <span className="text-headline-sm" style={{ color: "var(--primary)", display: "block", marginBottom: 4 }}>University Registrar (Issuer)</span>
                             <p className="text-body-sm" style={{ color: "var(--on-surface-variant)" }}>
                                 Issuers are responsible for the accuracy of certificate data. By issuing a certificate, the institution
                                 attests that the student data is genuine. Issuers are responsible for revoking certificates when warranted.
                             </p>
                         </div>
-                        <div style={{ background: "var(--surface-container-lowest)", padding: "var(--space-md)", borderRadius: "var(--radius-lg)", border: "1px solid rgba(70,69,84,0.3)" }}>
+                        <div style={{ background: "var(--surface-container-lowest)", padding: "var(--space-md)", borderRadius: "var(--radius-lg)", border: "1px solid var(--rule-soft)" }}>
                             <span className="text-headline-sm" style={{ color: "var(--secondary)", display: "block", marginBottom: 4 }}>Employer / Public (Verifier)</span>
                             <p className="text-body-sm" style={{ color: "var(--on-surface-variant)" }}>
                                 Verifiers access the public verification endpoint. No account is required. Verifiers must enter
@@ -121,8 +120,7 @@ export default function TermsConditions() {
 
             <div style={{ textAlign: "center", marginTop: "var(--space-xl)" }}>
                 <Link to="/" className="btn btn-ghost">
-                    <span className="material-symbols-outlined" style={{ fontSize: 16 }}>arrow_back</span>
-                    Back to Home
+                    Back to home
                 </Link>
             </div>
         </div>

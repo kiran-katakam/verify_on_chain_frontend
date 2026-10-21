@@ -10,6 +10,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@fontsource/bodoni-moda": "^5.3.0",
+    "@fontsource/courier-prime": "^5.3.0",
+    "@fontsource/libre-franklin": "^5.3.0",
     "@yudiel/react-qr-scanner": "^2.6.0",
     "axios": "^1.20.0",
     "ethers": "^6.17.0",

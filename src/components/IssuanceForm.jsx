@@ -80,10 +80,10 @@ export default function IssuanceForm({ wallet }) {
     };
 
     const pipelineSteps = [
-        { key: "preparing", label: "Step 1: Preparing Payload", desc: "Schema normalization & keccak-256 hash generated", icon: "check" },
-        { key: "signing", label: "Step 2: Registrar Signing (MetaMask)", desc: "Sign credential with institutional authority key", icon: "token" },
-        { key: "confirming", label: "Step 3: Mempool Broadcast", desc: "Propagation across consensus validators", icon: "link" },
-        { key: "done", label: "Step 4: Immutably Anchored", desc: "EVM finality state with verification receipt", icon: "shield" },
+        { key: "preparing", label: "Prepare", desc: "The backend checks the fields and computes the fingerprint", icon: "check" },
+        { key: "signing", label: "Sign", desc: "You approve the transaction in MetaMask", icon: "draw" },
+        { key: "confirming", label: "Confirm", desc: "The network includes the transaction in a block", icon: "link" },
+        { key: "done", label: "Recorded", desc: "The contract holds the fingerprint; the database marks it issued", icon: "shield" },
     ];
 
     const statusOrder = ["preparing", "signing", "confirming", "done"];
@@ -93,17 +93,13 @@ export default function IssuanceForm({ wallet }) {
 
     return (
         <div className="card">
-            <div className="card-accent-top card-accent-primary"></div>
 
             {/* Header */}
             <div className="card-header">
                 <div>
-                    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 20, color: "var(--primary)" }}>edit_document</span>
-                        <h2 className="text-headline-md">Single Certificate Engine</h2>
-                    </div>
+                    <h2 className="text-headline-md">Issue a certificate</h2>
                     <p className="text-body-sm" style={{ color: "var(--on-surface-variant)", marginTop: 2 }}>
-                        Generate cryptographic signature & anchor hash
+                        The fingerprint below updates as you type. It is what gets anchored on-chain.
                     </p>
                 </div>
             </div>
@@ -112,30 +108,30 @@ export default function IssuanceForm({ wallet }) {
             <form onSubmit={handleSubmit}>
                 <div className="form-grid">
                     <div className="form-group">
-                        <label>First Name</label>
+                        <label>First name</label>
                         <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} required />
                     </div>
                     <div className="form-group">
-                        <label>Last Name</label>
+                        <label>Last name</label>
                         <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} required />
                     </div>
                 </div>
                 <div className="form-grid">
                     <div className="form-group">
-                        <label>Student ID / Matrikel</label>
+                        <label>Student ID</label>
                         <input type="text" name="studentId" value={formData.studentId} onChange={handleChange}
                             className="mono-input" required />
                     </div>
                     <div className="form-group">
-                        <label>Date of Birth</label>
+                        <label>Date of birth</label>
                         <input type="date" name="dob" value={formData.dob} onChange={handleChange} required />
                     </div>
                 </div>
                 <div className="form-grid">
                     <div className="form-group">
-                        <label>Percentile (×100)</label>
+                        <label>Percentile ×100</label>
                         <input type="number" name="percentile" value={formData.percentile} onChange={handleChange}
-                            min="0" max="10000" placeholder="9550 = 95.50%" required />
+                            min="0" max="10000" placeholder="9150 for 91.50%" required />
                     </div>
                 </div>
 
@@ -143,11 +139,8 @@ export default function IssuanceForm({ wallet }) {
                 {liveHash && (
                     <div className="hash-digest">
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                            <span className="text-label-caps" style={{ color: "var(--outline)", display: "flex", alignItems: "center", gap: 4 }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: 14, color: "var(--tertiary)" }}>fingerprint</span>
-                                DETERMINISTIC KECCAK-256 DIGEST
-                            </span>
-                            <span className="text-mono-sm" style={{ color: "var(--secondary)" }}>256 bits</span>
+                            <span className="text-label-caps" style={{ color: "var(--ink-3)" }}>Fingerprint · keccak-256</span>
+                            <span className="text-body-sm" style={{ color: "var(--ink-3)" }}>includes your wallet address</span>
                         </div>
                         <div className="hash-value-box">
                             <code>{liveHash}</code>
@@ -158,7 +151,7 @@ export default function IssuanceForm({ wallet }) {
                 {/* Consensus Pipeline */}
                 {status !== "idle" && status !== "error" && (
                     <div style={{ marginTop: "var(--space-sm)" }}>
-                        <span className="text-label-caps" style={{ color: "var(--outline)" }}>CONSENSUS PIPELINE STATE</span>
+                        <span className="text-label-caps" style={{ color: "var(--ink-3)" }}>Progress</span>
                         <div className="pipeline">
                             {pipelineSteps.map((step, i) => {
                                 const isCompleted = currentIdx > i || status === "done";
@@ -184,8 +177,8 @@ export default function IssuanceForm({ wallet }) {
                                                 <span className="text-headline-sm" style={{ color: isActive ? "var(--primary)" : isCompleted ? "var(--on-surface)" : "var(--outline)" }}>
                                                     {step.label}
                                                 </span>
-                                                {isCompleted && <span className="badge badge-issued" style={{ fontSize: 10 }}>Validated</span>}
-                                                {isActive && <span className="badge badge-pending" style={{ fontSize: 10 }}>In Progress</span>}
+                                                
+                                                {isActive && <span className="badge badge-pending" style={{ fontSize: 10 }}>Now</span>}
                                             </div>
                                             <span className="text-body-sm" style={{ color: isActive ? "var(--on-surface-variant)" : "var(--outline)" }}>
                                                 {step.desc}
@@ -205,13 +198,10 @@ export default function IssuanceForm({ wallet }) {
                     disabled={status === "preparing" || status === "signing" || status === "confirming"}
                     style={{ marginTop: "var(--space-lg)" }}
                 >
-                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-                        {status === "done" ? "check_circle" : "lock_open"}
-                    </span>
-                    {status === "preparing" && "Preparing Payload..."}
-                    {status === "signing" && "Sign in MetaMask..."}
-                    {status === "confirming" && "Broadcasting to Chain..."}
-                    {(status === "idle" || status === "done" || status === "error") && "Sign & Issue to Ethereum Blockchain"}
+                    {status === "preparing" && "Preparing…"}
+                    {status === "signing" && "Sign in MetaMask…"}
+                    {status === "confirming" && "Waiting for confirmation…"}
+                    {(status === "idle" || status === "done" || status === "error") && "Sign and issue"}
                 </button>
             </form>
 
@@ -219,8 +209,7 @@ export default function IssuanceForm({ wallet }) {
             {error && (
                 <div className="alert alert-error">
                     <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 18 }}>error</span>
-                        <strong>Error:</strong> {error}
+                        {error}
                     </div>
                 </div>
             )}
@@ -229,16 +218,15 @@ export default function IssuanceForm({ wallet }) {
             {result && (
                 <div className="alert alert-success">
                     <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: "var(--space-sm)" }}>
-                        <span className="material-symbols-outlined" style={{ fontSize: 22 }}>verified</span>
-                        <span className="text-headline-sm">Certificate Immutably Anchored</span>
+                        <span className="text-headline-sm">Certificate issued and recorded on-chain</span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                         <div className="text-mono-sm">
-                            <span style={{ color: "var(--outline)" }}>HASH: </span>
-                            <span style={{ color: "var(--primary)" }}>{result.fieldHash.slice(0, 18)}...{result.fieldHash.slice(-6)}</span>
+                            <span style={{ color: "var(--ink-3)" }}>Fingerprint </span>
+                            <span style={{ color: "var(--seal)" }}>{result.fieldHash.slice(0, 18)}...{result.fieldHash.slice(-6)}</span>
                         </div>
                         <div className="text-mono-sm">
-                            <span style={{ color: "var(--outline)" }}>TX: </span>
+                            <span style={{ color: "var(--ink-3)" }}>Transaction </span>
                             <span>{result.txHash.slice(0, 18)}...{result.txHash.slice(-6)}</span>
                         </div>
                     </div>

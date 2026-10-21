@@ -1,17 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import api from "../utils/api.js";
-
-const resultIcons = {
-    Valid: "verified",
-    Revoked: "gpp_bad",
-    "Not Found": "help_outline",
-};
-
-const resultAccents = {
-    Valid: "card-accent-success",
-    Revoked: "card-accent-error",
-    "Not Found": "card-accent-warning",
-};
+import { computeFieldHash } from "../utils/contract.js";
+import Rosette from "./Rosette.jsx";
 
 const resultClasses = {
     Valid: "result-valid",
@@ -36,7 +26,17 @@ export default function VerificationResult() {
 
     const handleChange = (e) => {
         setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+        setResult(null);
     };
+
+    // Same hash the backend computes; drawn live so the seal forms as fields are typed.
+    const liveHash = useMemo(() => {
+        const f = formData;
+        if (!f.firstName || !f.lastName || !f.dob || !f.studentId || !/^\d+$/.test(f.percentile) || !f.issuerAddress) return null;
+        try { return computeFieldHash(f, f.issuerAddress); } catch { return null; }
+    }, [formData]);
+
+    const sealColor = !result ? "var(--ink-3)" : result.result === "Valid" ? "var(--valid)" : result.result === "Revoked" ? "var(--seal)" : "var(--umber)";
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -58,18 +58,14 @@ export default function VerificationResult() {
     };
 
     return (
-        <div className={`verifier-grid ${result ? "verifier-grid-result" : ""}`}>
+        <div className="verifier-grid">
             {/* Verification Form */}
             <div className="card">
-                <div className="card-accent-top card-accent-primary"></div>
                 <div className="card-header">
                     <div>
-                        <div style={{ display: "flex", alignItems: "center", gap: "var(--space-xs)" }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: 20, color: "var(--secondary)" }}>search</span>
-                            <h2 className="text-headline-md">Credential Verification Query</h2>
-                        </div>
+                        <h2 className="text-headline-md">Certificate details</h2>
                         <p className="text-body-sm" style={{ color: "var(--on-surface-variant)", marginTop: 2 }}>
-                            Re-enter the original credential fields to compute the deterministic hash
+                            Spelling, spacing and capitals must match the printed certificate.
                         </p>
                     </div>
                 </div>
@@ -77,39 +73,39 @@ export default function VerificationResult() {
                 <form onSubmit={handleSubmit}>
                     <div className="form-grid">
                         <div className="form-group">
-                            <label>First Name</label>
+                            <label>First name</label>
                             <input type="text" name="firstName" value={formData.firstName}
-                                onChange={handleChange} required placeholder="Julian" />
+                                onChange={handleChange} required placeholder="e.g. Ananya" />
                         </div>
                         <div className="form-group">
-                            <label>Last Name</label>
+                            <label>Last name</label>
                             <input type="text" name="lastName" value={formData.lastName}
-                                onChange={handleChange} required placeholder="Vance" />
+                                onChange={handleChange} required placeholder="e.g. Rao" />
                         </div>
                     </div>
                     <div className="form-grid">
                         <div className="form-group">
-                            <label>Student ID / Matrikel</label>
+                            <label>Student ID</label>
                             <input type="text" name="studentId" value={formData.studentId}
-                                onChange={handleChange} className="mono-input" required placeholder="ETHZ-2024-9941" />
+                                onChange={handleChange} className="mono-input" required placeholder="e.g. 21BCE7781" />
                         </div>
                         <div className="form-group">
-                            <label>Date of Birth</label>
+                            <label>Date of birth</label>
                             <input type="date" name="dob" value={formData.dob}
                                 onChange={handleChange} required />
                         </div>
                     </div>
                     <div className="form-grid">
                         <div className="form-group">
-                            <label>Percentile (×100)</label>
+                            <label>Percentile ×100</label>
                             <input type="number" name="percentile" value={formData.percentile}
-                                onChange={handleChange} min="0" max="10000" placeholder="9550 = 95.50%" required />
+                                onChange={handleChange} min="0" max="10000" placeholder="e.g. 9150 for 91.50%" required />
                         </div>
                         <div className="form-group">
-                            <label>Issuing University</label>
+                            <label>Issuing university</label>
                             <select name="issuerAddress" value={formData.issuerAddress}
                                 onChange={handleChange} required>
-                                <option value="">— Select Issuer —</option>
+                                <option value="">Select a university</option>
                                 {universities.map((u) => (
                                     <option key={u.walletAddress} value={u.walletAddress}>
                                         {u.name} ({u.shortCode})
@@ -125,54 +121,58 @@ export default function VerificationResult() {
                         disabled={loading}
                         style={{ marginTop: "var(--space-md)" }}
                     >
-                        <span className="material-symbols-outlined" style={{ fontSize: 18 }}>
-                            {loading ? "hourglass_empty" : "fact_check"}
-                        </span>
-                        {loading ? "Querying Blockchain..." : "Verify Against Ethereum Ledger"}
+                        {loading ? "Checking the contract…" : "Verify certificate"}
                     </button>
                 </form>
 
                 {error && (
                     <div className="alert alert-error">
                         <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
-                            <span className="material-symbols-outlined" style={{ fontSize: 18 }}>error</span>
-                            <strong>Error:</strong> {error}
+                            {error}
                         </div>
                     </div>
                 )}
             </div>
 
-            {/* Result Card — side by side on desktop */}
-            {result && (
-                <div className={`verification-result ${resultClasses[result.result]}`} style={{ position: "sticky", top: "var(--space-xl)" }}>
-                    <div className={`card-accent-top ${resultAccents[result.result]}`}></div>
-                    <span className="material-symbols-outlined" style={{ fontSize: 48 }}>
-                        {resultIcons[result.result]}
-                    </span>
-                    <h2 className="result-text">{result.result}</h2>
-                    <p className="result-message">{result.message}</p>
-                    {result.details && (
-                        <div className="result-details">
-                            {result.details.issuer && (
-                                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: 4 }}>
-                                    <span className="text-label-caps" style={{ color: "var(--outline)" }}>ISSUER</span>
-                                    <span className="text-mono-sm" style={{ color: "var(--on-surface)" }}>
-                                        {result.details.issuer.slice(0, 10)}...{result.details.issuer.slice(-6)}
-                                    </span>
-                                </div>
-                            )}
-                            {result.details.issuedAt && (
-                                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
-                                    <span className="text-label-caps" style={{ color: "var(--outline)" }}>ISSUED</span>
-                                    <span className="text-mono-sm" style={{ color: "var(--on-surface)" }}>
-                                        {new Date(result.details.issuedAt).toLocaleString()}
-                                    </span>
-                                </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-            )}
+            <aside className="seal-panel" aria-live="polite" aria-label="Verification seal">
+                {liveHash ? (
+                    <div className="lp-rosette is-drawing" style={{ color: sealColor }}>
+                        <Rosette hash={liveHash} animate title="Rosette drawn from the fingerprint of the fields entered" />
+                    </div>
+                ) : (
+                    <div className="seal-empty">The seal draws itself once every field is filled in.</div>
+                )}
+                {liveHash && <div className="seal-serial">{liveHash}</div>}
+
+                {result ? (
+                    <div className={resultClasses[result.result]}>
+                        <h2 className="result-text">{result.result}</h2>
+                        <p className="result-message">{result.message}</p>
+                        {result.details && (
+                            <div className="result-details">
+                                {result.details.issuer && (
+                                    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)", marginBottom: 4 }}>
+                                        <span className="text-label-caps" style={{ color: "var(--ink-3)" }}>Issuer</span>
+                                        <span className="text-mono-sm" style={{ color: "var(--seal)" }}>
+                                            {result.details.issuer.slice(0, 10)}…{result.details.issuer.slice(-6)}
+                                        </span>
+                                    </div>
+                                )}
+                                {result.details.issuedAt && (
+                                    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
+                                        <span className="text-label-caps" style={{ color: "var(--ink-3)" }}>Issued</span>
+                                        <span className="text-mono-sm" style={{ color: "var(--ink)" }}>
+                                            {new Date(result.details.issuedAt).toLocaleString()}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                ) : liveHash ? (
+                    <p className="seal-pending">Not checked yet. Press Verify certificate to look this fingerprint up on the contract.</p>
+                ) : null}
+            </aside>
         </div>
     );
 }

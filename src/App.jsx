@@ -9,6 +9,7 @@ import UniversityDashboard from "./pages/UniversityDashboard.jsx";
 import VerifierPage from "./pages/VerifierPage.jsx";
 import PrivacyPolicy from "./pages/PrivacyPolicy.jsx";
 import TermsConditions from "./pages/TermsConditions.jsx";
+import Rosette from "./components/Rosette.jsx";
 
 export default function App() {
     const wallet = useWallet();
@@ -43,28 +44,27 @@ export default function App() {
                 <header className="app-header">
                     <div className="header-left">
                         <Link to="/" className="logo">
+                            <span className="logo-mark"><Rosette hash={"0x" + "5a3c91e7".repeat(8)} /></span>
                             <div className="logo-text">
                                 <span className="logo-title">VerifyOnChain</span>
                                 <span className="logo-subtitle">
-                                    {role === "admin" ? "ADMIN CONSOLE" : role === "university" ? "REGISTRAR NODE" : "PUBLIC VERIFIER"}
+                                    {role === "admin" ? "Admin" : role === "university" ? "Registrar" : "Certificate registry"}
                                 </span>
                             </div>
                         </Link>
                         <nav className="nav-links">
                             {role === "university" && (
                                 <Link to="/dashboard" className={location.pathname === "/dashboard" ? "active" : ""}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>school</span>
-                                    University Portal
+                                    University portal
                                 </Link>
                             )}
                             {role === "admin" && (
                                 <Link to="/admin" className={location.pathname === "/admin" ? "active" : ""}>
-                                    <span className="material-symbols-outlined" style={{ fontSize: 18 }}>admin_panel_settings</span>
-                                    Admin Console
+                                    Admin console
                                 </Link>
                             )}
                             <Link to="/verify" className={location.pathname === "/verify" ? "active" : ""}>
-                                Public Verifier
+                                Verify a certificate
                             </Link>
                         </nav>
                     </div>
@@ -73,7 +73,7 @@ export default function App() {
                             <>
                                 <div className="network-pill">
                                     <span className={`network-dot ${wallet.isCorrectNetwork ? "green" : "red"}`}></span>
-                                    <span className="text-mono-sm" style={{ color: "var(--on-surface-variant)" }}>
+                                    <span className="text-body-sm" style={{ color: "var(--ink-2)" }}>
                                         {wallet.isCorrectNetwork ? "Hardhat" : "Wrong Network"}
                                     </span>
                                 </div>
@@ -81,16 +81,15 @@ export default function App() {
                                     <span className="wallet-address">
                                         {wallet.account.slice(0, 6)}...{wallet.account.slice(-4)}
                                     </span>
-                                    <button className="btn-disconnect" onClick={wallet.disconnect} title="Disconnect">
+                                    <button className="btn-disconnect" onClick={wallet.disconnect} title="Disconnect" aria-label="Disconnect wallet">
                                         <span className="material-symbols-outlined" style={{ fontSize: 15 }}>power_settings_new</span>
                                     </button>
                                 </div>
                             </>
                         )}
                         {!wallet.isConnected && isPublicPage && (
-                            <Link to="/login" className="btn btn-primary btn-sm" style={{ textDecoration: "none" }}>
-                                <span className="material-symbols-outlined" style={{ fontSize: 16 }}>account_balance_wallet</span>
-                                University Login
+                            <Link to="/login" className="btn btn-sm">
+                                University login
                             </Link>
                         )}
                     </div>
@@ -122,10 +121,14 @@ export default function App() {
             </main>
 
             <footer className="app-footer">
-                <div style={{ display: "flex", justifyContent: "center", gap: "var(--space-xl)", flexWrap: "wrap" }}>
-                    <span className="text-mono-sm">VerifyOnChain Protocol • EVM Sovereign Registry</span>
-                    <Link to="/privacy" className="text-mono-sm" style={{ color: "var(--outline)" }}>Privacy</Link>
-                    <Link to="/terms" className="text-mono-sm" style={{ color: "var(--outline)" }}>Terms</Link>
+                <div style={{ maxWidth: "var(--container-max)", margin: "0 auto", display: "flex", justifyContent: "space-between", gap: "var(--space-md) var(--space-xl)", flexWrap: "wrap" }}>
+                    <span>VerifyOnChain, an academic research project</span>
+                    <nav style={{ display: "flex", gap: "var(--space-xl)", flexWrap: "wrap" }}>
+                        <Link to="/verify">Verify</Link>
+                        <Link to="/login">University login</Link>
+                        <Link to="/privacy">Privacy</Link>
+                        <Link to="/terms">Terms</Link>
+                    </nav>
                 </div>
             </footer>
         </div>

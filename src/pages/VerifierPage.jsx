@@ -6,20 +6,10 @@ export default function VerifierPage({ wallet }) {
         <div>
             {/* Header */}
             <div className="dashboard-header">
-                <div style={{ display: "flex", alignItems: "center", gap: "var(--space-sm)" }}>
-                    <span className="text-label-caps" style={{
-                        color: "var(--secondary)",
-                        background: "rgba(78, 222, 163, 0.2)",
-                        padding: "2px 6px",
-                        borderRadius: "var(--radius)"
-                    }}>PUBLIC ENDPOINT</span>
-                    <span className="text-mono-sm" style={{ color: "var(--outline)" }}>•</span>
-                    <span className="text-label-caps" style={{ color: "var(--outline)" }}>NO AUTHENTICATION REQUIRED</span>
-                </div>
-                <h1 className="text-headline-xl">Public Credential Verification Engine</h1>
+                <h1 className="text-headline-xl">Verify a certificate</h1>
                 <p className="text-body-sm" style={{ color: "var(--on-surface-variant)" }}>
-                    Enter the original credential data to recompute the deterministic hash and verify directly against the Ethereum ledger.
-                    No personal data is transmitted or stored.
+                    Type the fields exactly as they appear on the certificate and pick the issuing university.
+                    The fingerprint is recomputed and checked against the contract. Nothing you type is stored.
                 </p>
             </div>
 
